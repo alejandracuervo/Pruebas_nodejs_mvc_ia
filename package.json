@@ -1,0 +1,36 @@
+{
+  "name": "prueba_node_mvc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "cross-env NODE_ENV=test mocha --exit --recursive --timeout 10000"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "express-async-errors": "^3.1.1",
+    "helmet": "^8.1.0",
+    "joi": "^18.0.2",
+    "morgan": "^1.10.1",
+    "mysql2": "^3.15.3",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.22",
+    "chai": "^6.2.1",
+    "cross-env": "^10.1.0",
+    "eslint": "^9.39.1",
+    "jest": "^30.2.0",
+    "mocha": "^11.7.5",
+    "nodemon": "^3.1.11",
+    "postcss": "^8.5.6",
+    "supertest": "^7.1.4",
+    "tailwindcss": "^4.1.17"
+  }
+}
