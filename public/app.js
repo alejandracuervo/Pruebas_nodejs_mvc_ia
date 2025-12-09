@@ -1,7 +1,7 @@
 // public/app.js
 const API_BASE = '/api/gestiones';
 
-// Tipificaciones (igual que el backend)
+// Tipificaciones
 const TIPIFICACIONES = [
   'Contacto Efectivo',
   'No Contacto',
@@ -51,8 +51,10 @@ const filterHasta = $('#filterHasta');
 const btnFilter = $('#btn-filter');
 const btnClear = $('#btn-clear');
 const latestList = $('#latestList');
+const chartTipificacionCtx = document.getElementById('chartTipificacion').getContext('2d');
 
 let editingId = null;
+let tipificacionChart = null;
 
 // Inicialización
 function init() {
@@ -67,6 +69,7 @@ function init() {
     state.hasta = filterHasta.value;
     state.page = 1;
     loadGestiones();
+    renderDashboard();
   });
 
   btnClear.addEventListener('click', () => {
@@ -76,6 +79,7 @@ function init() {
     filterHasta.value = '';
     state = { ...state, tipificacion: '', asesorId: '', desde: '', hasta: '', page: 1 };
     loadGestiones();
+    renderDashboard();
   });
 
   prevPage.addEventListener('click', () => {
@@ -105,6 +109,7 @@ function init() {
   });
 
   loadGestiones();
+  renderDashboard();
 }
 
 function showPage(page) {
@@ -244,7 +249,7 @@ formGestion.addEventListener('submit', async (e) => {
         body: JSON.stringify(body)
       });
       const data = await res.json();
-      if (res.ok) { closeModal(); loadGestiones(); }
+      if (res.ok) { closeModal(); loadGestiones(); renderDashboard(); }
       else { alert('Error: ' + (data.message || JSON.stringify(data))); }
     } else {
       const res = await fetch(API_BASE, {
@@ -253,7 +258,7 @@ formGestion.addEventListener('submit', async (e) => {
         body: JSON.stringify(body)
       });
       const data = await res.json();
-      if (res.ok) { closeModal(); showPage('gestiones'); loadGestiones(); }
+      if (res.ok) { closeModal(); showPage('gestiones'); loadGestiones(); renderDashboard(); }
       else { alert('Error: ' + (data.message || JSON.stringify(data))); }
     }
   } catch (err) {
@@ -266,7 +271,7 @@ async function deleteGestion(id) {
   if (!confirm('¿Cerrar (borrado lógico) esta gestión?')) return;
   const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
   const data = await res.json();
-  if (res.ok) loadGestiones();
+  if (res.ok) { loadGestiones(); renderDashboard(); }
   else alert('Error: ' + (data.message || JSON.stringify(data)));
 }
 
@@ -299,6 +304,77 @@ function toggleModalDetail(show) {
   else { modalDetail.classList.add('hidden'); modalDetail.style.display = 'none'; }
 }
 
+// ==== DASHBOARD ====
+async function renderDashboard() {
+  try {
+    const res = await fetch(`${API_BASE}?page=1&limit=1000`);
+    const data = await res.json();
+    const list = data.data || [];
+
+    // Cards
+    const abiertas = list.filter(x => (x.estado || '').trim().toLowerCase() === 'abierta').length;
+    const cerradas = list.filter(x => (x.estado || '').trim().toLowerCase() === 'cerrada').length;
+    cardAbiertas.textContent = abiertas;
+    cardCerradas.textContent = cerradas;
+    cardTotal.textContent = list.length;
+
+    // Últimas gestiones
+    latestList.innerHTML = '';
+    list.slice(0, 6).forEach(g => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="font-medium">${g.clienteNombre || '—'}</div>
+        <div class="text-xs text-slate-500">${g.tipificacion || ''} · ${formatDate(g.createdAt)}</div>
+      `;
+      latestList.appendChild(li);
+    });
+
+    // Contar tipificaciones
+    const counts = {};
+    TIPIFICACIONES.forEach(t => counts[t] = 0);
+    list.forEach(g => { if (g.tipificacion && counts[g.tipificacion] !== undefined) counts[g.tipificacion] += 1; });
+
+    const labels = Object.keys(counts).filter(k => counts[k] > 0);
+    const values = labels.map(l => counts[l]);
+
+    const chartData = {
+      labels,
+      datasets: [{
+        label: 'Gestiones por tipificación',
+        data: values,
+        backgroundColor: [
+          '#3B82F6', '#F97316', '#10B981', '#EF4444',
+          '#8B5CF6', '#F59E0B', '#14B8A6', '#6366F1'
+        ]
+      }]
+    };
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: { label: (context) => `${context.parsed} gestiones` }
+        }
+      }
+    };
+
+    if (tipificacionChart) {
+      tipificacionChart.data = chartData;
+      tipificacionChart.options = chartOptions;
+      tipificacionChart.update();
+    } else {
+      tipificacionChart = new Chart(chartTipificacionCtx, {
+        type: 'doughnut', // ahora es circular
+        data: chartData,
+        options: chartOptions
+      });
+    }
+
+  } catch (err) {
+    console.error('Error dashboard', err);
+  }
+}
+
 init();
-
-

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gestiones BPO — Dashboard</title>
 
-  <!-- Tailwind Play CDN (rápido para prototipo) -->
+  <!-- Tailwind Play CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Chart.js -->
@@ -72,7 +72,9 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div class="col-span-2 bg-white rounded-lg shadow p-4">
             <h4 class="font-semibold mb-2">Distribución por tipificación</h4>
-            <canvas id="chartTipificacion" height="140"></canvas>
+            <div class="w-full h-96"> <!-- altura fija para gráfico circular -->
+              <canvas id="chartTipificacion"></canvas>
+            </div>
           </div>
 
           <div class="bg-white rounded-lg shadow p-4">
